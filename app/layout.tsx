@@ -106,6 +106,9 @@ export default function RootLayout({
           content="/icons/icon-144x144.png"
         />
 
+        {/* Splash video preload */}
+        <link rel="preload" href="/splash-video.mp4" as="video" type="video/mp4" />
+
         {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link
