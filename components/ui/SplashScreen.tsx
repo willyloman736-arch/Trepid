@@ -1,30 +1,292 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 
 /* ============================================================
-   SplashScreen — cinematic light-beam intro inspired by Grok.
-   Three phases: beam → text → exit. Total runtime ~5 seconds.
+   SplashScreen — cinematic T + two figures animation.
 
-   The beam grows from a single bright point, expands into a
-   vertical shaft of light, then a horizontal lens flare with
-   volumetric rays. The "Trepid" wordmark fades in through
-   the light. Then everything fades to black and onComplete is
-   invoked, which unmounts this component and reveals the app.
+   Sequence (~5.5s):
+   0.0–0.8s  Stars twinkle on pure black
+   0.8–1.6s  The letter T draws itself (stroke animation)
+   1.6–2.0s  T glows briefly
+   2.0–2.6s  Figure 1 walks from right onto the T crossbar
+   2.6–3.2s  Figure 1 extends arms downward
+   3.2–3.6s  Figure 2 appears below, arm raised
+   3.6–4.0s  Figure 2 rises (pulled up with easeOutBack overshoot)
+   4.0–4.3s  Connection flash at the handshake point
+   4.3–5.2s  "Trepid" + subtitle text fades in
+   5.2–5.5s  Everything fades to black → onComplete()
 
-   Cleanup is hardened: a `cancelled` flag and a timeouts array
-   ensure that on Strict Mode double-mount or premature unmount
-   no setState calls fire after the component is gone.
+   Phase transitions use setTimeout (not RAF-gated) so the
+   splash completes even if the tab is backgrounded.
    ============================================================ */
 
 interface SplashScreenProps {
   onComplete: () => void
 }
 
+/* ── Easing functions ── */
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+const easeInOutCubic = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+const easeOutBack = (t: number) => {
+  const c1 = 1.70158
+  const c3 = c1 + 1
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
+}
+
+/* ── Star type ── */
+interface Star {
+  x: number
+  y: number
+  size: number
+  phase: number
+  speed: number
+  baseOpacity: number
+}
+
+function initStars(w: number, h: number): Star[] {
+  const stars: Star[] = []
+  for (let i = 0; i < 80; i++) {
+    const roll = Math.random()
+    const size = roll > 0.95 ? 1.8 + Math.random() * 0.6 : roll > 0.7 ? 0.8 + Math.random() * 0.5 : 0.3 + Math.random() * 0.4
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      size,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.01 + Math.random() * 0.025,
+      baseOpacity: size > 1.5 ? 0.6 : size > 0.7 ? 0.35 : 0.18,
+    })
+  }
+  return stars
+}
+
+function drawStars(ctx: CanvasRenderingContext2D, stars: Star[], elapsed: number) {
+  for (const s of stars) {
+    const twinkle = Math.sin(elapsed * 3 + s.phase) * (s.size > 1.2 ? 0.3 : 0.12)
+    const opacity = Math.max(0.02, Math.min(1, s.baseOpacity + twinkle))
+    ctx.beginPath()
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(255,255,255,${opacity})`
+    ctx.fill()
+    if (s.size > 1.5) {
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 3)
+      g.addColorStop(0, `rgba(255,255,255,${opacity * 0.25})`)
+      g.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2)
+      ctx.fillStyle = g
+      ctx.fill()
+    }
+  }
+}
+
+/* ── T dimensions (scaled to viewport) ── */
+function getT(w: number, h: number) {
+  const scale = Math.min(w, h) / 600
+  const cx = w / 2
+  const cy = h * 0.42
+  const crossW = 120 * scale
+  const crossH = 16 * scale
+  const stemW = 16 * scale
+  const stemH = 110 * scale
+  const crossY = cy - stemH / 2
+  return { cx, cy, crossW, crossH, stemW, stemH, crossY, scale }
+}
+
+/* ── Draw animated T ── */
+function drawT(ctx: CanvasRenderingContext2D, w: number, h: number, progress: number) {
+  const T = getT(w, h)
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'
+  ctx.lineWidth = 3
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  // Crossbar draws first (progress 0→0.5)
+  const crossProgress = Math.min(1, progress / 0.5)
+  if (crossProgress > 0) {
+    const halfW = T.crossW / 2 * easeOutCubic(crossProgress)
+    ctx.beginPath()
+    ctx.moveTo(T.cx - halfW, T.crossY)
+    ctx.lineTo(T.cx + halfW, T.crossY)
+    ctx.stroke()
+    // Crossbar thickness
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.fillRect(T.cx - halfW, T.crossY - T.crossH / 2, halfW * 2, T.crossH)
+  }
+
+  // Stem draws second (progress 0.5→1.0)
+  if (progress > 0.5) {
+    const stemProgress = easeOutCubic((progress - 0.5) / 0.5)
+    const stemLen = T.stemH * stemProgress
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.fillRect(T.cx - T.stemW / 2, T.crossY + T.crossH / 2, T.stemW, stemLen)
+  }
+
+  ctx.restore()
+}
+
+/* ── Draw T glow ── */
+function drawTGlow(ctx: CanvasRenderingContext2D, w: number, h: number, progress: number) {
+  const T = getT(w, h)
+  const alpha = progress < 0.5 ? progress * 2 * 0.15 : (1 - progress) * 2 * 0.15
+  const g = ctx.createRadialGradient(T.cx, T.cy, 0, T.cx, T.cy, 120 * T.scale)
+  g.addColorStop(0, `rgba(255,255,255,${alpha})`)
+  g.addColorStop(0.5, `rgba(200,220,255,${alpha * 0.4})`)
+  g.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = g
+  ctx.beginPath()
+  ctx.arc(T.cx, T.cy, 120 * T.scale, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+/* ── Human silhouette ── */
+function drawHuman(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  feetY: number,
+  scale: number,
+  armAngle: number,
+  opacity: number,
+  bobY = 0
+) {
+  const s = scale
+  const y = feetY + bobY
+  ctx.save()
+  ctx.fillStyle = `rgba(255,255,255,${opacity})`
+  ctx.shadowBlur = 6
+  ctx.shadowColor = `rgba(255,255,255,${opacity * 0.2})`
+
+  // Head
+  ctx.beginPath()
+  ctx.arc(x, y - s * 36, s * 5, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Torso
+  ctx.fillRect(x - s * 3.5, y - s * 30, s * 7, s * 16)
+
+  // Left arm
+  ctx.save()
+  ctx.translate(x - s * 3.5, y - s * 28)
+  ctx.rotate(armAngle * Math.PI * 0.55)
+  ctx.fillRect(-s * 1.5, 0, s * 3, s * 14)
+  ctx.restore()
+
+  // Right arm
+  ctx.save()
+  ctx.translate(x + s * 3.5, y - s * 28)
+  ctx.rotate(-armAngle * Math.PI * 0.55)
+  ctx.fillRect(-s * 1.5, 0, s * 3, s * 14)
+  ctx.restore()
+
+  // Left leg
+  ctx.fillRect(x - s * 3.5, y - s * 14, s * 3, s * 14)
+
+  // Right leg
+  ctx.fillRect(x + s * 0.5, y - s * 14, s * 3, s * 14)
+
+  ctx.shadowBlur = 0
+  ctx.restore()
+}
+
+/* ── Upward-reaching figure (arms up) ── */
+function drawHumanReaching(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  feetY: number,
+  scale: number,
+  opacity: number
+) {
+  const s = scale
+  const y = feetY
+  ctx.save()
+  ctx.fillStyle = `rgba(255,255,255,${opacity})`
+  ctx.shadowBlur = 6
+  ctx.shadowColor = `rgba(255,255,255,${opacity * 0.2})`
+
+  // Head
+  ctx.beginPath()
+  ctx.arc(x, y - s * 36, s * 5, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Torso
+  ctx.fillRect(x - s * 3.5, y - s * 30, s * 7, s * 16)
+
+  // Arms reaching UP
+  ctx.save()
+  ctx.translate(x - s * 3, y - s * 28)
+  ctx.rotate(-Math.PI * 0.4) // reaching upward-left
+  ctx.fillRect(-s * 1.5, -s * 14, s * 3, s * 14)
+  ctx.restore()
+
+  ctx.save()
+  ctx.translate(x + s * 3, y - s * 28)
+  ctx.rotate(Math.PI * 0.4) // reaching upward-right
+  ctx.fillRect(-s * 1.5, -s * 14, s * 3, s * 14)
+  ctx.restore()
+
+  // Legs
+  ctx.fillRect(x - s * 3.5, y - s * 14, s * 3, s * 14)
+  ctx.fillRect(x + s * 0.5, y - s * 14, s * 3, s * 14)
+
+  ctx.shadowBlur = 0
+  ctx.restore()
+}
+
+/* ── Connection flash ── */
+function drawFlash(ctx: CanvasRenderingContext2D, x: number, y: number, progress: number) {
+  const radius = 25 * progress
+  const alpha = 1 - progress
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius)
+  g.addColorStop(0, `rgba(255,255,255,${alpha})`)
+  g.addColorStop(0.4, `rgba(200,220,255,${alpha * 0.5})`)
+  g.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = g
+  ctx.beginPath()
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+/* ── Text reveal ── */
+function drawText(ctx: CanvasRenderingContext2D, w: number, h: number, progress: number) {
+  const T = getT(w, h)
+  const isMobile = w < 768
+  const titleSize = isMobile ? 48 : 64
+  const textY = T.crossY + T.stemH + 60 * T.scale
+
+  // "Trepid"
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.font = `800 ${titleSize}px Inter, -apple-system, sans-serif`
+  ctx.fillStyle = `rgba(255,255,255,${easeOutCubic(progress) * 0.95})`
+  ctx.shadowBlur = 20
+  ctx.shadowColor = `rgba(255,255,255,${progress * 0.3})`
+  ctx.fillText('Trepid', w / 2, textY + (1 - easeOutCubic(progress)) * 12)
+  ctx.shadowBlur = 0
+
+  // Subtitle (delayed slightly)
+  const subProgress = Math.max(0, (progress - 0.3) / 0.7)
+  if (subProgress > 0) {
+    ctx.font = `400 ${isMobile ? 11 : 13}px Inter, -apple-system, sans-serif`
+    ctx.fillStyle = `rgba(255,255,255,${easeOutCubic(subProgress) * 0.4})`
+    ctx.fillText(
+      'JOIN THE 1% OF PROFITABLE TRADERS',
+      w / 2,
+      textY + titleSize + 14
+    )
+  }
+  ctx.restore()
+}
+
+/* ============================================================
+   MAIN COMPONENT
+   ============================================================ */
+
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [phase, setPhase] = useState<'beam' | 'text' | 'exit'>('beam')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -32,7 +294,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    /* DPR-aware sizing for crisp beam edges on retina displays */
     const dpr = window.devicePixelRatio || 1
     const w = window.innerWidth
     const h = window.innerHeight
@@ -45,167 +306,104 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     let cancelled = false
     let animId = 0
     const timeouts: ReturnType<typeof setTimeout>[] = []
+    const stars = initStars(w, h)
+    const startTime = performance.now()
 
-    /* TIMING — phase progression is driven by real-time setTimeout
-       (which still fires in hidden tabs, unlike requestAnimationFrame).
-       The RAF loop only handles visual drawing; if RAF is paused,
-       the splash still completes on schedule. */
-    const initialDelayMs = 400
-    const beamDurationMs = 2333 // ~140 frames at 60fps
-    const textHoldMs = 2200
-    const exitMs = 900
+    const T = getT(w, h)
+    const isMobile = w < 768
+    const figScale = (isMobile ? 0.75 : 0.9) * T.scale
 
-    const startTime = performance.now() + initialDelayMs
+    /* Walk start/end positions */
+    const walkStartX = w * 0.7
+    const walkEndX = T.cx
+    const walkY = T.crossY - T.crossH / 2 - 2
 
-    /* easeInOutCubic — Apple-spec ease */
-    const ease = (p: number) =>
-      p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+    /* Figure 2 positions */
+    const fig2StartY = T.crossY + T.stemH + 50 * T.scale
+    const fig2EndY = T.crossY + 8 * T.scale
+    const connectionY = T.crossY + 15 * T.scale
 
-    const drawBeam = () => {
+    const tick = (now: number) => {
       if (cancelled) return
+      const elapsed = (now - startTime) / 1000
 
       ctx.clearRect(0, 0, w, h)
 
-      const cx = w * 0.5
-      const cy = h * 0.42
+      // Always draw stars
+      drawStars(ctx, stars, elapsed)
 
-      /* Time-driven progress, not frame-driven, so any skipped
-         frames don't desync the animation from the phase clock. */
-      const elapsed = performance.now() - startTime
-      const progress = Math.max(0, Math.min(elapsed / beamDurationMs, 1))
-      const eased = ease(progress)
-      /* Decorative frame counter for the volumetric ray phase shift */
-      const frame = Math.floor(elapsed / 16.667)
-
-      /* ── CORE BEAM — central vertical shaft of light ── */
-      const beamHeight = h * 1.4
-      const beamWidth = 2 + eased * 180
-
-      const beamGrad = ctx.createRadialGradient(
-        cx,
-        cy - beamHeight * 0.1,
-        0,
-        cx,
-        cy,
-        beamWidth * 3
-      )
-      beamGrad.addColorStop(0, `rgba(255, 255, 255, ${0.95 * eased})`)
-      beamGrad.addColorStop(0.08, `rgba(200, 220, 255, ${0.7 * eased})`)
-      beamGrad.addColorStop(0.2, `rgba(120, 160, 255, ${0.35 * eased})`)
-      beamGrad.addColorStop(0.5, `rgba(60, 100, 220, ${0.15 * eased})`)
-      beamGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
-
-      ctx.save()
-      ctx.fillStyle = beamGrad
-      ctx.beginPath()
-      ctx.ellipse(
-        cx,
-        cy,
-        beamWidth * (0.3 + eased * 2),
-        beamHeight * (0.3 + eased * 0.8),
-        0,
-        0,
-        Math.PI * 2
-      )
-      ctx.fill()
-      ctx.restore()
-
-      /* ── LENS FLARE — horizontal light spread at the source ── */
-      if (eased > 0.3) {
-        const flareProgress = (eased - 0.3) / 0.7
-        const flareWidth = w * 1.2 * flareProgress
-
-        const flareGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flareWidth)
-        flareGrad.addColorStop(0, `rgba(180, 200, 255, ${0.6 * flareProgress})`)
-        flareGrad.addColorStop(0.1, `rgba(100, 140, 255, ${0.3 * flareProgress})`)
-        flareGrad.addColorStop(0.4, `rgba(60, 100, 200, ${0.1 * flareProgress})`)
-        flareGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
-
-        ctx.save()
-        ctx.fillStyle = flareGrad
-        ctx.beginPath()
-        ctx.ellipse(cx, cy, flareWidth, flareWidth * 0.18, 0, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.restore()
+      if (elapsed < 0.8) {
+        // Stars only
+      } else if (elapsed < 1.6) {
+        const p = (elapsed - 0.8) / 0.8
+        drawT(ctx, w, h, easeOutCubic(p))
+      } else if (elapsed < 2.0) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, (elapsed - 1.6) / 0.4)
+      } else if (elapsed < 2.6) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        const walkP = easeOutCubic((elapsed - 2.0) / 0.6)
+        const fx = walkStartX + (walkEndX - walkStartX) * walkP
+        const bob = Math.sin(walkP * Math.PI * 6) * 3
+        drawHuman(ctx, fx, walkY, figScale, 0, 0.95, bob)
+      } else if (elapsed < 3.2) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        const armP = easeInOutCubic((elapsed - 2.6) / 0.6)
+        drawHuman(ctx, walkEndX, walkY, figScale, armP, 0.95)
+      } else if (elapsed < 3.6) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        drawHuman(ctx, walkEndX, walkY, figScale, 1, 0.95)
+        const appearP = easeOutCubic((elapsed - 3.2) / 0.4)
+        drawHumanReaching(ctx, T.cx, fig2StartY, figScale * 0.85, appearP * 0.95)
+      } else if (elapsed < 4.0) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        drawHuman(ctx, walkEndX, walkY, figScale, 1, 0.95)
+        const riseP = Math.min(1, easeOutBack((elapsed - 3.6) / 0.4))
+        const fy = fig2StartY + (fig2EndY - fig2StartY) * riseP
+        drawHumanReaching(ctx, T.cx, fy, figScale * 0.85, 0.95)
+      } else if (elapsed < 4.3) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        drawHuman(ctx, walkEndX, walkY, figScale, 0.3, 0.95)
+        drawHumanReaching(ctx, T.cx, fig2EndY, figScale * 0.85, 0.95)
+        drawFlash(ctx, T.cx, connectionY, (elapsed - 4.0) / 0.3)
+      } else if (elapsed < 5.2) {
+        drawT(ctx, w, h, 1)
+        drawTGlow(ctx, w, h, 0.3)
+        // Both figures together at top
+        drawHuman(ctx, walkEndX - 10 * T.scale, walkY, figScale, 0, 0.95)
+        drawHuman(ctx, walkEndX + 10 * T.scale, walkY, figScale * 0.85, 0, 0.95)
+        const textP = Math.min(1, (elapsed - 4.3) / 0.5)
+        drawText(ctx, w, h, textP)
+      } else if (elapsed < 5.5) {
+        const fade = (elapsed - 5.2) / 0.3
+        ctx.globalAlpha = 1 - fade
+        drawT(ctx, w, h, 1)
+        drawHuman(ctx, walkEndX - 10 * T.scale, walkY, figScale, 0, 0.95)
+        drawHuman(ctx, walkEndX + 10 * T.scale, walkY, figScale * 0.85, 0, 0.95)
+        drawText(ctx, w, h, 1)
+        ctx.globalAlpha = 1
+      } else {
+        // Complete
+        if (!cancelled) onComplete()
+        return
       }
 
-      /* ── BRIGHT CENTER POINT — white-hot origin of the beam ── */
-      if (eased > 0.1) {
-        const pointGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 80 * eased)
-        pointGrad.addColorStop(0, `rgba(255, 255, 255, ${eased})`)
-        pointGrad.addColorStop(0.3, `rgba(220, 235, 255, ${0.6 * eased})`)
-        pointGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
-        ctx.fillStyle = pointGrad
-        ctx.beginPath()
-        ctx.arc(cx, cy, 80 * eased, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      /* ── VOLUMETRIC LIGHT RAYS — diagonal scatter from origin ── */
-      if (eased > 0.5) {
-        const rayProgress = (eased - 0.5) / 0.5
-        const rayCount = 8
-        for (let i = 0; i < rayCount; i++) {
-          const angle = (i / rayCount) * Math.PI * 2 + frame * 0.002
-          const rayLen = (60 + Math.sin(angle * 3) * 30) * rayProgress * 3
-          const rayOpacity =
-            0.03 * rayProgress * (0.5 + Math.sin(frame * 0.05 + i) * 0.5)
-
-          ctx.save()
-          ctx.strokeStyle = `rgba(180, 210, 255, ${rayOpacity})`
-          ctx.lineWidth = 1 + Math.sin(i) * 0.5
-          ctx.beginPath()
-          ctx.moveTo(cx, cy)
-          ctx.lineTo(cx + Math.cos(angle) * rayLen, cy + Math.sin(angle) * rayLen)
-          ctx.stroke()
-          ctx.restore()
-        }
-      }
-
-      /* Continue the RAF loop until the beam reaches full progress
-         plus a small tail (so the final frame is drawn even if a
-         frame is dropped). After that, no more drawing is needed. */
-      if (progress < 1.05) {
-        animId = requestAnimationFrame(drawBeam)
-      }
+      animId = requestAnimationFrame(tick)
     }
 
-    /* Start drawing after the initial black-out delay */
+    // Start RAF
+    animId = requestAnimationFrame(tick)
+
+    // Safety timeout: ensure onComplete fires even if RAF is paused
     timeouts.push(
       setTimeout(() => {
-        if (cancelled) return
-        animId = requestAnimationFrame(drawBeam)
-      }, initialDelayMs)
-    )
-
-    /* PHASE TRANSITIONS — driven by setTimeout, independent of RAF.
-       This guarantees the splash completes even when the tab is in
-       a hidden/background state and RAF is paused by the browser. */
-    timeouts.push(
-      setTimeout(() => {
-        if (cancelled) return
-        setPhase('text')
-      }, initialDelayMs + beamDurationMs)
-    )
-
-    timeouts.push(
-      setTimeout(
-        () => {
-          if (cancelled) return
-          setPhase('exit')
-        },
-        initialDelayMs + beamDurationMs + textHoldMs
-      )
-    )
-
-    timeouts.push(
-      setTimeout(
-        () => {
-          if (cancelled) return
-          onComplete()
-        },
-        initialDelayMs + beamDurationMs + textHoldMs + exitMs
-      )
+        if (!cancelled) onComplete()
+      }, 6000)
     )
 
     return () => {
@@ -216,23 +414,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete])
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: phase === 'exit' ? 0 : 1 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    <div
       style={{
         position: 'fixed',
         inset: 0,
         background: '#000000',
         zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         overflow: 'hidden',
       }}
       aria-hidden="true"
     >
-      {/* Light beam canvas */}
       <canvas
         ref={canvasRef}
         style={{
@@ -243,94 +434,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           pointerEvents: 'none',
         }}
       />
-
-      {/* Brand wordmark — fades in through the light during the text phase */}
-      <AnimatePresence>
-        {phase !== 'beam' && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'relative',
-              zIndex: 2,
-              textAlign: 'center',
-              userSelect: 'none',
-            }}
-          >
-            <motion.h1
-              initial={{ opacity: 0, letterSpacing: '0.3em' }}
-              animate={{ opacity: 1, letterSpacing: '-0.03em' }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                fontSize: 'clamp(52px, 10vw, 96px)',
-                fontWeight: 800,
-                color: 'rgba(255, 255, 255, 0.95)',
-                fontFamily: 'Inter, -apple-system, sans-serif',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-                margin: 0,
-                textShadow: `
-                  0 0 60px rgba(120, 160, 255, 0.8),
-                  0 0 120px rgba(80, 120, 255, 0.4),
-                  0 0 200px rgba(60, 100, 220, 0.2)
-                `,
-              }}
-            >
-              Trepid
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                fontSize: 'clamp(13px, 2vw, 16px)',
-                fontWeight: 400,
-                color: 'rgba(255, 255, 255, 0.5)',
-                fontFamily: 'Inter, -apple-system, sans-serif',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginTop: 16,
-                marginBottom: 0,
-              }}
-            >
-              Discipline Engine
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Bottom-left tag — Grok-style "Discipline Engine" */}
-      <AnimatePresence>
-        {phase === 'text' && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 0.35, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            style={{
-              position: 'absolute',
-              bottom: 32,
-              left: 32,
-              zIndex: 2,
-            }}
-          >
-            <p
-              style={{
-                fontSize: 12,
-                color: 'rgba(255, 255, 255, 0.5)',
-                fontFamily: 'Inter, -apple-system, sans-serif',
-                margin: 0,
-                letterSpacing: '0.04em',
-              }}
-            >
-              Discipline Engine
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
