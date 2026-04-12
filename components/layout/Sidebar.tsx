@@ -96,7 +96,7 @@ export function Sidebar() {
                 )}
                 style={
                   active
-                    ? { background: 'rgba(0, 122, 255, 0.12)' }
+                    ? { background: 'rgba(79, 110, 247, 0.12)' }
                     : undefined
                 }
               >

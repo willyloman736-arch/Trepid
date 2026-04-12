@@ -20,7 +20,8 @@
       "WebFetch(domain:trepid.vercel.app)",
       "Bash(ls \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.mp4 \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.webm \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.mov)",
       "Bash(ls \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd/\"*.mp4)",
-      "Read(//c/Users/KAMSTORE/Desktop/**)"
+      "Read(//c/Users/KAMSTORE/Desktop/**)",
+      "Bash(xargs sed:*)"
     ]
   }
 }

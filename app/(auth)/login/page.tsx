@@ -65,19 +65,19 @@ export default function LoginPage() {
                 width: 56,
                 height: 56,
                 borderRadius: 16,
-                background: 'rgba(0, 122, 255, 0.15)',
-                border: '1px solid rgba(0, 122, 255, 0.3)',
+                background: 'rgba(79, 110, 247, 0.15)',
+                border: '1px solid rgba(79, 110, 247, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 24px rgba(0,122,255,0.2)',
+                boxShadow: '0 0 24px rgba(79,110,247,0.2)',
               }}
             >
               <span
                 style={{
                   fontSize: 22,
                   fontWeight: 800,
-                  color: '#007AFF',
+                  color: '#4F6EF7',
                   fontFamily: 'Inter, sans-serif',
                   letterSpacing: '-0.04em',
                 }}

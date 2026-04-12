@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 const EMOTIONS: { id: Emotion; label: string; color: string }[] = [
   { id: 'CONFIDENT', label: 'Confident', color: '#30D158' },
-  { id: 'NEUTRAL', label: 'Neutral', color: '#007AFF' },
+  { id: 'NEUTRAL', label: 'Neutral', color: '#4F6EF7' },
   { id: 'FOMO', label: 'FOMO', color: '#FF9F0A' },
   { id: 'REVENGE', label: 'Revenge', color: '#FF3B30' },
   { id: 'FEAR', label: 'Fear', color: '#BF5AF2' },

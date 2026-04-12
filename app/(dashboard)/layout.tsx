@@ -18,6 +18,7 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { CinematicOnboarding } from '@/components/onboarding/CinematicOnboarding'
 import { TabTitleUpdater } from '@/components/layout/TabTitleUpdater'
 import { InstallBanner } from '@/components/ui/InstallBanner'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { useStore } from '@/lib/store'
 import { installSoundsOnFirstGesture } from '@/lib/sounds'
 import { useSoundBridge } from '@/hooks/useSoundBridge'
@@ -168,7 +169,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main content — z-10, sits above the star field */}
       <main className="relative z-10 md:pl-[72px] pb-24 md:pb-8">
         <div className="max-w-[1400px] mx-auto px-5 md:px-10 pt-24">
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </div>
       </main>
 

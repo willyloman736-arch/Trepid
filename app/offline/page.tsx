@@ -69,7 +69,7 @@ export default function OfflinePage() {
           if (typeof window !== 'undefined') window.location.reload()
         }}
         style={{
-          background: '#007AFF',
+          background: '#4F6EF7',
           color: 'white',
           border: 'none',
           borderRadius: 14,

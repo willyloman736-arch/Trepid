@@ -298,7 +298,7 @@ function MentorStat({
         : tone === 'danger'
           ? '#FF3B30'
           : tone === 'accent'
-            ? '#007AFF'
+            ? '#4F6EF7'
             : 'rgba(0,0,0,0.3)'
 
   return (

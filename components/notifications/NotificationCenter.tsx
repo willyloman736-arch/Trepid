@@ -180,7 +180,7 @@ function NotificationRow({ n }: { n: NotificationRecord }) {
         ? '#FF9F0A'
         : tone === 'success'
           ? '#30D158'
-          : '#007AFF'
+          : '#4F6EF7'
 
   const time = new Date(n.timestamp).toLocaleTimeString([], {
     hour: 'numeric',

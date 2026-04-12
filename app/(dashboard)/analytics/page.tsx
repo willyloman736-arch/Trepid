@@ -27,7 +27,7 @@ import { generateBehavioralNarrative } from '@/lib/discipline-scorer'
    Apple chart palette
    ============================================================ */
 const CHART_COLORS = {
-  primary: '#007AFF',
+  primary: '#4F6EF7',
   success: '#30D158',
   warning: '#FF9F0A',
   danger: '#FF3B30',
@@ -44,7 +44,7 @@ const VIOLATION_COLORS: Record<string, string> = {
   LOSS_STREAK: '#BF5AF2',
   MAX_TRADES_EXCEEDED: '#5E5CE6',
   DAILY_LOSS_EXCEEDED: '#FF3B30',
-  SESSION_VIOLATION: '#007AFF',
+  SESSION_VIOLATION: '#4F6EF7',
   RULE_BYPASS_ATTEMPT: '#FFD60A',
 }
 

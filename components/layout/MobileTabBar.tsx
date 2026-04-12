@@ -21,7 +21,7 @@ const TABS: Tab[] = [
   { icon: 'shield-check', label: 'Rules', path: '/rules' },
   { icon: 'book-open', label: 'Journal', path: '/journal' },
   { icon: 'bar-chart', label: 'Analytics', path: '/analytics' },
-  { icon: 'users', label: 'Partners', path: '/accountability' },
+  { icon: 'settings', label: 'Settings', path: '/settings' },
 ]
 
 export function MobileTabBar() {
@@ -69,7 +69,7 @@ export function MobileTabBar() {
               borderRadius: 12,
               minWidth: 56,
               minHeight: 56,
-              color: active ? '#007AFF' : 'rgba(255, 255, 255, 0.42)',
+              color: active ? '#4F6EF7' : 'rgba(255, 255, 255, 0.42)',
               transition: 'color 0.2s ease',
             }}
             aria-label={tab.label}

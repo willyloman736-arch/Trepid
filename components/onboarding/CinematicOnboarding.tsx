@@ -160,7 +160,7 @@ function StepStatement({ onContinue }: { onContinue: () => void }) {
                   line.highlight
                     ? {
                         background:
-                          'linear-gradient(135deg, #007AFF 0%, #5E5CE6 35%, #BF5AF2 65%, #FF2D55 100%)',
+                          'linear-gradient(135deg, #4F6EF7 0%, #5E5CE6 35%, #BF5AF2 65%, #FF2D55 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -349,7 +349,7 @@ function StepFirstRule({
             step={1}
             value={maxTrades}
             onChange={(e) => onChange(parseInt(e.target.value))}
-            className="w-full [accent-color:#007AFF] cursor-pointer"
+            className="w-full [accent-color:#4F6EF7] cursor-pointer"
           />
           <div className="flex justify-between text-[11px] text-white/40 mt-2 font-medium">
             <span>1</span>

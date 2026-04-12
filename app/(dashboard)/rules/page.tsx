@@ -243,7 +243,7 @@ function RuleRow({
                   onChange={(e) =>
                     onChange(rule.id, { value: parseFloat(e.target.value) })
                   }
-                  className="w-full [accent-color:#007AFF] cursor-pointer"
+                  className="w-full [accent-color:#4F6EF7] cursor-pointer"
                 />
               </div>
             )}

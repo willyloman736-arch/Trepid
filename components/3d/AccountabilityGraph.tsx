@@ -96,7 +96,7 @@ function Connection({
     <line ref={ref} geometry={geometry}>
       <lineBasicMaterial
         ref={matRef}
-        color={pulsing ? '#FF3B30' : '#007AFF'}
+        color={pulsing ? '#FF3B30' : '#4F6EF7'}
         transparent
         opacity={0.35}
       />
@@ -133,7 +133,7 @@ function Graph({ traderName, partners, selectedId }: GraphProps) {
   return (
     <group ref={groupRef}>
       {/* Center trader node */}
-      <Node position={[0, 0, 0]} color="#007AFF" size={0.42} pulse selected />
+      <Node position={[0, 0, 0]} color="#4F6EF7" size={0.42} pulse selected />
 
       {/* Partner nodes */}
       {layout.map(({ partner, position }) => {
@@ -158,7 +158,7 @@ function Graph({ traderName, partners, selectedId }: GraphProps) {
       })}
 
       {/* Center point light */}
-      <pointLight position={[0, 0, 0]} intensity={3} color="#007AFF" distance={8} />
+      <pointLight position={[0, 0, 0]} intensity={3} color="#4F6EF7" distance={8} />
       <pointLight position={[3, 2, 2]} intensity={0.8} color="#30D158" distance={6} />
     </group>
   )

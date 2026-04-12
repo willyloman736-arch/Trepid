@@ -13,7 +13,7 @@ interface GlassBadgeProps {
 }
 
 const DOT_COLOR: Record<Tone, string> = {
-  accent: '#007AFF',
+  accent: '#4F6EF7',
   success: '#30D158',
   warning: '#FF9F0A',
   danger: '#FF3B30',

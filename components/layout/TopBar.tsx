@@ -156,7 +156,7 @@ export function TopBar() {
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.94 }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-white text-[12px] font-semibold shadow-[0_2px_8px_rgba(0,122,255,0.5)] hover:bg-accent-hover transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-white text-[12px] font-semibold shadow-[0_2px_8px_rgba(79,110,247,0.5)] hover:bg-accent-hover transition-colors"
           >
             <Icon name="plus" className="w-3 h-3" strokeWidth={2.5} />
             Log Trade

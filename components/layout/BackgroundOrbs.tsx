@@ -106,7 +106,7 @@ export function BackgroundOrbs({
         )}
         style={{
           background:
-            'radial-gradient(circle, #007AFF 0%, rgba(0,122,255,0) 65%)',
+            'radial-gradient(circle, #4F6EF7 0%, rgba(79,110,247,0) 65%)',
         }}
       />
 

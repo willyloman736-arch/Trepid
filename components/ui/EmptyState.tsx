@@ -46,7 +46,7 @@ export const emptyStates = {
     title: 'Not enough data yet.',
     subtitle:
       'Trepid needs at least 5 sessions to show behavioral patterns. Keep trading.',
-    color: '#007AFF',
+    color: '#4F6EF7',
   },
   notifications_empty: {
     icon: '◉',

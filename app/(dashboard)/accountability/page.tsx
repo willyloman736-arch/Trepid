@@ -131,7 +131,7 @@ export default function AccountabilityPage() {
                 />
                 <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-[11px] font-semibold">
                   <div className="flex items-center gap-3">
-                    <Legend color="#007AFF" label="You" />
+                    <Legend color="#4F6EF7" label="You" />
                     <Legend color="#30D158" label="Mentor" />
                     <Legend color="#BF5AF2" label="Partner" />
                   </div>
@@ -242,7 +242,7 @@ export default function AccountabilityPage() {
               <span className="text-body text-label">Notify at stage</span>
               <span
                 className="text-[28px] font-bold tabular-nums tracking-tight"
-                style={{ color: '#007AFF' }}
+                style={{ color: '#4F6EF7' }}
               >
                 Level {settings.notifyStage}
               </span>
@@ -255,7 +255,7 @@ export default function AccountabilityPage() {
               onChange={(e) =>
                 updateSettings({ notifyStage: parseInt(e.target.value) })
               }
-              className="w-full [accent-color:#007AFF]"
+              className="w-full [accent-color:#4F6EF7]"
             />
             <div className="flex justify-between text-[11px] font-semibold text-label-tertiary mt-2">
               {[1, 2, 3, 4, 5, 6].map((l) => (
@@ -306,7 +306,7 @@ function StatPanel({
   tone: 'success' | 'warning' | 'accent'
 }) {
   const colorHex =
-    tone === 'success' ? '#30D158' : tone === 'warning' ? '#FF9F0A' : '#007AFF'
+    tone === 'success' ? '#30D158' : tone === 'warning' ? '#FF9F0A' : '#4F6EF7'
 
   return (
     <div className="glass p-6">

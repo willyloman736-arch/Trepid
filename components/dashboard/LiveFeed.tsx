@@ -9,7 +9,7 @@ const DOT_COLOR = {
   success: '#30D158',
   danger: '#FF3B30',
   warning: '#FF9F0A',
-  accent: '#007AFF',
+  accent: '#4F6EF7',
 } as const
 
 export function LiveFeed() {

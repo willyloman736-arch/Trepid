@@ -11,7 +11,9 @@ export default function LandingPage() {
   return (
     <main className="landing-hero relative min-h-screen flex flex-col items-center justify-center px-6 py-20 overflow-hidden">
       <NightSky />
-      <BackgroundOrbs dim />
+      {/* No dim prop on landing — avoids SSR/CSR hydration mismatch
+          and the default opacities are already low enough */}
+      <BackgroundOrbs />
 
       {/* Floating navigation bar */}
       <nav

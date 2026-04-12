@@ -214,7 +214,7 @@ export function FloatingBubble() {
                 className="absolute -bottom-20 -left-20 w-60 h-60 rounded-full blur-3xl opacity-25"
                 style={{
                   background:
-                    'radial-gradient(circle, #007AFF 0%, transparent 60%)',
+                    'radial-gradient(circle, #4F6EF7 0%, transparent 60%)',
                 }}
               />
             </div>
