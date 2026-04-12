@@ -47,7 +47,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
     const timeouts: ReturnType<typeof setTimeout>[] = []
 
+    let started = false
     const handleCanPlay = () => {
+      if (started) return
+      started = true
       setPhase('playing')
       video.play().catch(() => {
         /* Autoplay blocked — skip splash */
@@ -64,21 +67,41 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       complete()
     }
 
-    /* Timeout fallback — if video takes >3s to load, skip */
+    /* Timeout fallback — if video takes >8s to START loading, skip.
+       Increased from 3s because the video is 4MB / 9s and needs time
+       to buffer on slower connections. Once playing, let it run to
+       completion (the 'ended' event handles that). */
     timeouts.push(
       setTimeout(() => {
-        if (!completedRef.current && phase === 'loading') {
+        if (!completedRef.current && !video.currentTime) {
+          /* Video hasn't started playing at all after 8s — skip */
           complete()
         }
-      }, 3000)
+      }, 8000)
     )
 
+    /* Hard safety cap — if video is STILL playing after 15s, complete.
+       Covers edge cases like infinite-length streams or stuck buffers. */
+    timeouts.push(
+      setTimeout(() => {
+        if (!completedRef.current) {
+          setPhase('fading')
+          timeouts.push(setTimeout(complete, 800))
+        }
+      }, 15000)
+    )
+
+    /* Listen to both canplay (can start, may buffer) and
+       canplaythrough (can play to end without buffering).
+       Whichever fires first starts the video. */
+    video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('canplaythrough', handleCanPlay)
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
 
     return () => {
       timeouts.forEach((t) => clearTimeout(t))
+      video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('canplaythrough', handleCanPlay)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)

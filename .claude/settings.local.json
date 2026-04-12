@@ -21,7 +21,8 @@
       "Bash(ls \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.mp4 \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.webm \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public/\"*.mov)",
       "Bash(ls \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd/\"*.mp4)",
       "Read(//c/Users/KAMSTORE/Desktop/**)",
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(ffprobe -v quiet -print_format json -show_format \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public\\\\splash-video.mp4\")"
     ]
   }
 }
