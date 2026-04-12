@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(ipconfig)",
+      "Bash(netstat -ano)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:57872/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:54323/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{time_total}s\\\\n\" http://localhost:54323/)",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code} time=%{time_total}s\\\\n\" \"http://localhost:54323/\")",
+      "Bash(curl -sS -o /tmp/landing.html -w \"status=%{http_code} time=%{time_total}s size=%{size_download}\\\\n\" \"http://localhost:54323/\")",
+      "Bash(tee /tmp/curl-result.txt)",
+      "Read(//tmp/**)",
+      "Bash(cat next.config.*)"
+    ]
+  }
+}

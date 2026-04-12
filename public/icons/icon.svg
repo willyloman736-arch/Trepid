@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="96" fill="#000"/>
+  <g stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Shield outline -->
+    <path d="M256 60 L128 120 L128 260 C128 360 256 440 256 440 C256 440 384 360 384 260 L384 120 Z" fill="none"/>
+    <!-- Checkmark inside shield -->
+    <path d="M200 260 L240 300 L320 220"/>
+    <!-- Horizontal bar — discipline meter -->
+    <line x1="180" y1="360" x2="332" y2="360" stroke-width="12" opacity="0.4"/>
+    <line x1="180" y1="360" x2="280" y2="360" stroke-width="12"/>
+  </g>
+</svg>

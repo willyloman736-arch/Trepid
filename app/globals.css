@@ -1,0 +1,1826 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ============================================================
+   Custom property registration — enables animation of --angle
+   and --angle2 for the swirling liquid colors inside the bubble.
+   Two separate angles so two conic gradients can rotate
+   independently (counter-rotating) and create the mixing effect.
+   ============================================================ */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --angle2 {
+  syntax: '<angle>';
+  initial-value: 180deg;
+  inherits: false;
+}
+
+:root {
+  /* System backgrounds — iOS / macOS light */
+  --sys-bg: #F2F2F7;
+  --sys-bg2: #FFFFFF;
+  --sys-bg3: #F2F2F7;
+  --sys-grouped: #F2F2F7;
+  --sys-elevated: #FFFFFF;
+
+  /* Apple system colors */
+  --blue: #007AFF;
+  --green: #30D158;
+  --indigo: #5E5CE6;
+  --orange: #FF9F0A;
+  --red: #FF3B30;
+  --teal: #5AC8FA;
+  --purple: #BF5AF2;
+  --pink: #FF2D55;
+  --yellow: #FFD60A;
+
+  /* Semantic */
+  --accent: #007AFF;
+  --accent-hover: #0A84FF;
+  --success: #30D158;
+  --warning: #FF9F0A;
+  --danger: #FF3B30;
+
+  /* Labels — iOS text system */
+  --label: rgba(0, 0, 0, 0.85);
+  --label-secondary: rgba(0, 0, 0, 0.50);
+  --label-tertiary: rgba(0, 0, 0, 0.30);
+  --label-quaternary: rgba(0, 0, 0, 0.18);
+
+  /* Separators */
+  --separator: rgba(60, 60, 67, 0.29);
+  --separator-opaque: #C6C6C8;
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+}
+
+html.dark {
+  --sys-bg: #000000;
+  --sys-bg2: #000000;
+  --sys-bg3: #000000;
+  --sys-grouped: #000000;
+  --sys-elevated: #000000;
+
+  --label: rgba(255, 255, 255, 0.92);
+  --label-secondary: rgba(235, 235, 245, 0.60);
+  --label-tertiary: rgba(235, 235, 245, 0.38);
+  --label-quaternary: rgba(235, 235, 245, 0.22);
+
+  --separator: rgba(84, 84, 88, 0.65);
+  --separator-opaque: #38383A;
+
+  --glass-bg: rgba(18, 24, 38, 0.72);
+  --glass-bg-hover: rgba(22, 30, 46, 0.82);
+}
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Helvetica, Arial, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  html,
+  body {
+    background-color: #000000;
+    background: #000000;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Global box-sizing lock — guarantees width math stays sane */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    color: var(--label);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Helvetica, Arial, sans-serif;
+  }
+
+  html.dark,
+  html.dark body {
+    background-color: #000000;
+    background: #000000;
+  }
+
+  ::selection {
+    background: rgba(0, 122, 255, 0.2);
+    color: var(--label);
+  }
+
+  /* iOS-style scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(60, 60, 67, 0.18);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(60, 60, 67, 0.28);
+    background-clip: padding-box;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background: rgba(235, 235, 245, 0.18);
+    background-clip: padding-box;
+  }
+
+  /* Number inputs without spinners */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* ============================================================
+     TREPID LIQUID GLASS SYSTEM
+     Stars / night sky bleeds through. Cursor-tracking specular.
+     ::before = gradient border (mask-composite wet edge)
+     ::after  = specular highlight (follows --mouse-x / --mouse-y)
+     Comma selectors keep old class names working everywhere.
+     ============================================================ */
+
+  /* ── BASE GLASS (cards, panels, stat widgets) ── */
+  .glass,
+  .liquid-glass {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transform-style: preserve-3d;
+
+    /* High transparency — stars show through */
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px) saturate(180%) brightness(1.12) contrast(1.02);
+    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.12) contrast(1.02);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 20px;
+
+    /* Layered shadows — inset specular edges + near/mid/far drops */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      inset -1px 0 0 rgba(0, 0, 0, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 24px 64px rgba(0, 0, 0, 0.3);
+
+    transition:
+      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      background 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Gradient border — bright top-left, dark bottom-right (wet edge) */
+  .glass::before,
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.12) 20%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0.02) 70%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Cursor-tracking specular highlight — moves via --mouse-x/y CSS vars.
+     Without the useLiquidGlass hook, defaults to center (50%/30%). */
+  .glass::after,
+  .liquid-glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 30%),
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 30%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .glass:hover::after,
+  .liquid-glass:hover::after {
+    opacity: 1;
+  }
+
+  /* Hover — glass becomes more reflective, lifts slightly */
+  .glass:hover,
+  .liquid-glass:hover {
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.15) contrast(1.04);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15) contrast(1.04);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 1px 0 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+      inset -1px 0 0 rgba(0, 0, 0, 0.2),
+      0 4px 8px rgba(0, 0, 0, 0.4),
+      0 16px 40px rgba(0, 0, 0, 0.5),
+      0 40px 80px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Interactive variant — adds Y-lift on hover */
+  .glass-interactive {
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      background 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-interactive:hover {
+    transform: translateY(-3px);
+  }
+
+  /* ── SEMANTIC GLOW VARIANTS ── */
+  .glass.glow-success,
+  .liquid-glass.glow-success {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(48, 209, 88, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(48, 209, 88, 0.12);
+  }
+
+  .glass.glow-warning,
+  .liquid-glass.glow-warning {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 159, 10, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(255, 159, 10, 0.12);
+  }
+
+  .glass.glow-danger,
+  .liquid-glass.glow-danger {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 59, 48, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(255, 59, 48, 0.15);
+  }
+
+  .glass.glow-accent,
+  .liquid-glass.glow-accent {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(0, 122, 255, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(0, 122, 255, 0.12);
+  }
+
+  /* ── GLASS-DARK — floating pills, menus, Dynamic Island ── */
+  .glass-dark {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    background: rgba(22, 22, 26, 0.08);
+    backdrop-filter: blur(24px) saturate(180%) brightness(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.2);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.92);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.35),
+      0 8px 24px rgba(0, 0, 0, 0.45),
+      0 24px 64px rgba(0, 0, 0, 0.4);
+    transition:
+      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      background 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-dark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 25%,
+      rgba(255, 255, 255, 0.03) 55%,
+      rgba(255, 255, 255, 0.12) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .glass-dark::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      400px circle at var(--mouse-x, 50%) var(--mouse-y, 30%),
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 30%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .glass-dark:hover::after {
+    opacity: 1;
+  }
+
+  /* ── GLASS-MODAL — heavy blur for dialogs ── */
+  .glass-modal {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 24px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 1px 0 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      0 32px 80px rgba(0, 0, 0, 0.4);
+  }
+
+  .glass-modal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35) 0%,
+      rgba(255, 255, 255, 0.15) 25%,
+      rgba(255, 255, 255, 0.05) 55%,
+      rgba(0, 0, 0, 0.08) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .glass-modal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      800px circle at var(--mouse-x, 50%) var(--mouse-y, 30%),
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 30%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .glass-modal:hover::after {
+    opacity: 1;
+  }
+
+  /* ── GLASS-RAIL — sidebar strip ── */
+  .glass-rail {
+    position: relative;
+    isolation: isolate;
+    background: rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(24px) saturate(180%) brightness(1.15);
+    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.15);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 1px 0 0 rgba(255, 255, 255, 0.06),
+      4px 0 16px rgba(0, 0, 0, 0.25),
+      8px 0 32px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ============================================================
+     LIQUID GLASS ORB — the FloatingBubble signature.
+     Has conic gradient body + ::after specular C-arc
+     (mix-blend-mode: screen) + ::before bottom caustic reflection.
+     ============================================================ */
+  .liquid-glass-orb {
+    position: relative;
+    isolation: isolate;
+    border-radius: 9999px;
+    background: conic-gradient(
+      from var(--angle, 0deg),
+      #007AFF,
+      #5E5CE6,
+      #BF5AF2,
+      #FF2D55,
+      #FF9F0A,
+      #30D158,
+      #007AFF
+    );
+    box-shadow:
+      /* colored rim glows — the orb radiates */
+      0 0 40px rgba(94, 92, 230, 0.45),
+      0 0 80px rgba(0, 122, 255, 0.25),
+      /* actual drop shadow */
+      0 12px 24px rgba(0, 0, 0, 0.25),
+      0 24px 48px rgba(0, 0, 0, 0.2),
+      /* inner depth — bottom darkening makes it read as sphere */
+      inset 0 -8px 16px rgba(0, 0, 0, 0.25),
+      inset 0 4px 12px rgba(255, 255, 255, 0.35);
+    animation: spin-gradient 6s linear infinite;
+  }
+
+  /* Bottom reflection caustic — as if the orb is sitting on a wet surface */
+  .liquid-glass-orb::before {
+    content: '';
+    position: absolute;
+    bottom: 8%;
+    left: 18%;
+    right: 18%;
+    height: 22%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    filter: blur(3px);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* The signature C-arc specular highlight — rotated, screen-blended */
+  .liquid-glass-orb::after {
+    content: '';
+    position: absolute;
+    top: 6%;
+    left: 10%;
+    width: 58%;
+    height: 38%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at 30% 30%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.45) 22%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0) 65%
+    );
+    transform: rotate(-22deg);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .liquid-glass-orb-fast {
+    animation-duration: 2s;
+  }
+
+  /* ============================================================
+     WATER BALLOON BUBBLE — FloatingBubble companion v2
+     Layered structure:
+       .bubble-wrapper   → outer float + jiggle animations
+       .bubble-container → morphing blob shape (clips inner layers)
+         .bubble-inner   → conic gradient, spins, blurred 4px
+         .bubble-inner-2 → counter-rotating conic, blurred 8px, screen
+         .bubble-membrane→ translucent skin + inner shadows
+         .bubble-specular→ animated top-left highlight arc
+         .bubble-specular-2→ secondary bottom-right highlight dot
+     ============================================================ */
+  .bubble-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+    will-change: transform;
+    animation: balloon-float 5s ease-in-out infinite;
+  }
+
+  /* When .jiggle is added, water-jiggle replaces balloon-float */
+  .bubble-wrapper.jiggle {
+    animation: water-jiggle 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  .bubble-container {
+    position: absolute;
+    inset: 0;
+    isolation: isolate;
+    overflow: hidden;
+    will-change: border-radius;
+    animation: blob-morph 8s ease-in-out infinite;
+    /* drop shadow lives on the container so it follows the morphing blob */
+    filter:
+      drop-shadow(0 8px 24px rgba(94, 92, 230, 0.35))
+      drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  }
+
+  /* Rotating color wheel — layer 1 */
+  .bubble-inner {
+    position: absolute;
+    inset: -8%;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--angle, 0deg) at 40% 40%,
+      #FF2D55,
+      #FF9500,
+      #FFCC00,
+      #30D158,
+      #007AFF,
+      #5E5CE6,
+      #BF5AF2,
+      #FF2D55
+    );
+    animation: spin-hue 6s linear infinite;
+    filter: blur(4px) saturate(1.4);
+  }
+
+  /* Counter-rotating offset blob — layer 2, screen-blended */
+  .bubble-inner-2 {
+    position: absolute;
+    inset: -8%;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--angle2, 180deg) at 65% 60%,
+      #007AFF,
+      #BF5AF2,
+      #FF2D55,
+      #FF9500,
+      #30D158,
+      #007AFF
+    );
+    animation: spin-hue-reverse 9s linear infinite;
+    filter: blur(8px) saturate(1.2);
+    mix-blend-mode: screen;
+    opacity: 0.85;
+  }
+
+  /* Translucent water-balloon skin membrane */
+  .bubble-membrane {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at 35% 30%,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.15) 25%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(0, 0, 0, 0.1) 85%,
+      rgba(0, 0, 0, 0.25) 100%
+    );
+    box-shadow:
+      inset 3px 3px 12px rgba(255, 255, 255, 0.35),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+  }
+
+  /* Main specular — bright top-left arc, floats subtly */
+  .bubble-specular {
+    position: absolute;
+    top: 8%;
+    left: 12%;
+    width: 40%;
+    height: 28%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.4) 35%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(-25deg);
+    mix-blend-mode: screen;
+    animation: specular-float 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Secondary specular dot — bottom right wet sheen */
+  .bubble-specular-2 {
+    position: absolute;
+    bottom: 18%;
+    right: 16%;
+    width: 18%;
+    height: 12%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    );
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     CHROMATIC TINT — optional wrapper that lets background orbs
+     bleed color up through any glass surface. Apply as a child div
+     to make the glass pick up the rainbow underneath.
+     ============================================================ */
+  .chromatic-tint {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    mix-blend-mode: color-dodge;
+    opacity: 0.3;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(94, 92, 230, 0.15) 0%,
+      rgba(0, 122, 255, 0.1) 50%,
+      rgba(48, 209, 88, 0.12) 100%
+    );
+  }
+
+  /* ============================================================
+     COMMAND PALETTE — ⌘K search modal
+     ============================================================ */
+  .cmd-category {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(235, 235, 245, 0.35);
+    padding: 12px 16px 4px;
+  }
+
+  .cmd-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    position: relative;
+  }
+
+  .cmd-item.selected {
+    background: rgba(0, 122, 255, 0.14);
+  }
+
+  .cmd-item:hover:not(.selected) {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .cmd-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    flex-shrink: 0;
+  }
+
+  .cmd-item.selected .cmd-item-icon {
+    background: rgba(0, 122, 255, 0.18);
+    color: #0A84FF;
+  }
+
+  .cmd-item-label {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .cmd-item-enter {
+    font-size: 13px;
+    color: rgba(0, 122, 255, 0.7);
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  .cmd-item.selected .cmd-item-enter {
+    opacity: 1;
+  }
+
+  /* ============================================================
+     KEYBOARD SHORTCUT CHIP — <kbd> element
+     ============================================================ */
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      'SF Mono',
+      'Inter',
+      system-ui,
+      monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0;
+  }
+
+  /* ============================================================
+     NOTIFICATION BADGE — red dot with count
+     ============================================================ */
+  .notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ff3b30;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #000000;
+    box-shadow: 0 0 12px rgba(255, 59, 48, 0.5);
+    animation: pulse-badge 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     SUCCESS RIPPLE — pulse shadow ring, one-shot
+     Apply to an element to trigger the ripple effect.
+     ============================================================ */
+  .success-ripple {
+    animation: success-ripple 0.6s ease-out;
+  }
+
+  /* ============================================================
+     JELLY GLASS BUTTONS — glass surface + spring compress
+     ============================================================ */
+
+  /* Base liquid button */
+  .btn-primary,
+  .btn-liquid-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    /* Translucent glass blue */
+    background: rgba(0, 122, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: white;
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 0 rgba(0, 0, 80, 0.3),
+      0 4px 16px rgba(0, 122, 255, 0.4),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+    transition:
+      transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      background 0.2s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .btn-primary:hover:not(:disabled),
+  .btn-liquid-primary:hover:not(:disabled) {
+    background: rgba(0, 140, 255, 0.9);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 80, 0.35),
+      0 6px 24px rgba(0, 122, 255, 0.5),
+      0 3px 8px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  /* Jelly compress on press */
+  .btn-primary:active:not(:disabled),
+  .btn-liquid-primary:active:not(:disabled) {
+    transform: scale(0.94) translateY(1px) translateZ(0);
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 80, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 2px 8px rgba(0, 122, 255, 0.3);
+    transition: transform 0.06s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .btn-primary:disabled,
+  .btn-liquid-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Ghost — subtle glass pill */
+  .btn-ghost,
+  .btn-liquid-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    color: rgba(255, 255, 255, 0.9);
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+      0 4px 12px rgba(0, 0, 0, 0.3);
+    transition:
+      transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .btn-ghost:hover:not(:disabled),
+  .btn-liquid-ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  .btn-ghost:active:not(:disabled),
+  .btn-liquid-ghost:active:not(:disabled) {
+    transform: scale(0.94) translateY(1px) translateZ(0);
+    transition: transform 0.06s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Danger — red jelly */
+  .btn-danger,
+  .btn-liquid-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    background: rgba(255, 59, 48, 0.8);
+    color: white;
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(80, 0, 0, 0.3),
+      0 4px 16px rgba(255, 59, 48, 0.35),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+    transition:
+      transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .btn-danger:hover:not(:disabled),
+  .btn-liquid-danger:hover:not(:disabled) {
+    background: rgba(255, 59, 48, 0.9);
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  .btn-danger:active:not(:disabled),
+  .btn-liquid-danger:active:not(:disabled) {
+    transform: scale(0.94) translateY(1px) translateZ(0);
+    transition: transform 0.06s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Success — green jelly */
+  .btn-success,
+  .btn-liquid-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    background: rgba(48, 209, 88, 0.8);
+    color: white;
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 60, 0, 0.3),
+      0 4px 16px rgba(48, 209, 88, 0.35),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+    transition:
+      transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .btn-success:hover:not(:disabled),
+  .btn-liquid-success:hover:not(:disabled) {
+    background: rgba(48, 209, 88, 0.9);
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  .btn-success:active:not(:disabled),
+  .btn-liquid-success:active:not(:disabled) {
+    transform: scale(0.94) translateY(1px) translateZ(0);
+    transition: transform 0.06s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ============================================================
+     INPUTS — liquid glass surface
+     ============================================================ */
+  .input-glass {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--label);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-family: inherit;
+  }
+
+  .input-glass::placeholder {
+    color: var(--label-tertiary);
+    font-weight: 400;
+  }
+
+  .input-glass:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(0, 122, 255, 0.4);
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+  }
+
+  html.dark .input-glass {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  html.dark .input-glass:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(10, 132, 255, 0.4);
+    box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.08);
+  }
+
+  /* ============================================================
+     CHIPS / BADGES — Apple style
+     ============================================================ */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+  }
+
+  .chip-accent {
+    background: rgba(0, 122, 255, 0.12);
+    color: #007AFF;
+  }
+
+  .chip-success {
+    background: rgba(48, 209, 88, 0.14);
+    color: #1A8E3E;
+  }
+
+  .chip-warning {
+    background: rgba(255, 159, 10, 0.16);
+    color: #C67C00;
+  }
+
+  .chip-danger {
+    background: rgba(255, 59, 48, 0.12);
+    color: #D70015;
+  }
+
+  .chip-slate {
+    background: rgba(120, 120, 128, 0.12);
+    color: rgba(60, 60, 67, 0.6);
+  }
+
+  html.dark .chip-success {
+    color: #30D158;
+  }
+  html.dark .chip-warning {
+    color: #FF9F0A;
+  }
+  html.dark .chip-danger {
+    color: #FF453A;
+  }
+  html.dark .chip-slate {
+    color: rgba(235, 235, 245, 0.6);
+  }
+
+  /* ============================================================
+     APPLE TYPE SCALE — SF Pro style
+     ============================================================ */
+  .text-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.12;
+  }
+  .text-title-1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+  .text-title-2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
+  }
+  .text-title-3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.15px;
+    line-height: 1.25;
+  }
+  .text-headline {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+  }
+  .text-body {
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.1px;
+  }
+  .text-callout {
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.1px;
+  }
+  .text-subheadline {
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.05px;
+  }
+  .text-footnote {
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .text-caption {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.1px;
+  }
+  .text-caption-2 {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+  }
+}
+
+@layer utilities {
+  /* ============================================================
+     LIQUID GRADIENT FOR THE COMPANION BUBBLE
+     ============================================================ */
+  .liquid-gradient {
+    background: conic-gradient(
+      from var(--angle, 0deg),
+      #007AFF,
+      #5E5CE6,
+      #BF5AF2,
+      #FF2D55,
+      #FF9F0A,
+      #30D158,
+      #007AFF
+    );
+    animation: spin-gradient 6s linear infinite;
+  }
+
+  .liquid-gradient-fast {
+    animation-duration: 2s;
+  }
+
+  @keyframes spin-gradient {
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  @keyframes bubble-float {
+    0%,
+    100% {
+      transform: translateY(0px) scale(1);
+    }
+    50% {
+      transform: translateY(-8px) scale(1.02);
+    }
+  }
+
+  .animate-bubble-float {
+    animation: bubble-float 4s ease-in-out infinite;
+  }
+
+  /* ============================================================
+     WATER BALLOON KEYFRAMES — FloatingBubble v2
+     ============================================================ */
+
+  /* Slow organic blob morphing — applied to .bubble-container */
+  @keyframes blob-morph {
+    0% {
+      border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
+    }
+    20% {
+      border-radius: 45% 55% 40% 60% / 60% 40% 55% 45%;
+    }
+    40% {
+      border-radius: 55% 45% 65% 35% / 45% 55% 35% 65%;
+    }
+    60% {
+      border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%;
+    }
+    80% {
+      border-radius: 50% 50% 60% 40% / 40% 60% 45% 55%;
+    }
+    100% {
+      border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
+    }
+  }
+
+  /* Conic gradient rotation — layer 1 */
+  @keyframes spin-hue {
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  /* Counter-rotating conic gradient — layer 2 */
+  @keyframes spin-hue-reverse {
+    to {
+      --angle2: -180deg;
+    }
+  }
+
+  /* Specular highlight drifts slightly as if light shifts on the surface */
+  @keyframes specular-float {
+    0%,
+    100% {
+      transform: rotate(-25deg) translate(0, 0);
+    }
+    50% {
+      transform: rotate(-20deg) translate(2px, -2px);
+    }
+  }
+
+  /* Balloon floats up and down with Y-axis squish — gravity on the liquid */
+  @keyframes balloon-float {
+    0%,
+    100% {
+      transform: translateY(0px) scaleX(1) scaleY(1);
+    }
+    25% {
+      transform: translateY(-10px) scaleX(1.02) scaleY(0.98);
+    }
+    50% {
+      transform: translateY(-14px) scaleX(1) scaleY(1);
+    }
+    75% {
+      transform: translateY(-6px) scaleX(0.98) scaleY(1.02);
+    }
+  }
+
+  /* Water balloon jiggle on click */
+  @keyframes water-jiggle {
+    0% {
+      transform: scale(1);
+    }
+    15% {
+      transform: scale(1.12, 0.88);
+    }
+    30% {
+      transform: scale(0.9, 1.1);
+    }
+    45% {
+      transform: scale(1.06, 0.94);
+    }
+    60% {
+      transform: scale(0.96, 1.04);
+    }
+    75% {
+      transform: scale(1.02, 0.98);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* ============================================================
+     DRIFTING BACKGROUND ORBS
+     ============================================================ */
+  @keyframes orb-drift-1 {
+    0%,
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(60px, -40px) scale(1.05);
+    }
+    66% {
+      transform: translate(-40px, 40px) scale(0.95);
+    }
+  }
+
+  @keyframes orb-drift-2 {
+    0%,
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(-50px, 30px) scale(0.95);
+    }
+    66% {
+      transform: translate(40px, -30px) scale(1.05);
+    }
+  }
+
+  @keyframes orb-drift-3 {
+    0%,
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, 50px) scale(1.03);
+    }
+    66% {
+      transform: translate(-50px, -40px) scale(0.97);
+    }
+  }
+
+  .animate-orb-1 {
+    animation: orb-drift-1 25s ease-in-out infinite;
+  }
+  .animate-orb-2 {
+    animation: orb-drift-2 30s ease-in-out infinite;
+  }
+  .animate-orb-3 {
+    animation: orb-drift-3 20s ease-in-out infinite;
+  }
+
+  /* ============================================================
+     GRADIENT TEXT
+     ============================================================ */
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-warm {
+    background: linear-gradient(135deg, #FF9F0A 0%, #FF3B30 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-success {
+    background: linear-gradient(135deg, #30D158 0%, #007AFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Text color utilities for labels */
+  .text-label {
+    color: var(--label);
+  }
+  .text-label-secondary {
+    color: var(--label-secondary);
+  }
+  .text-label-tertiary {
+    color: var(--label-tertiary);
+  }
+  .text-label-quaternary {
+    color: var(--label-quaternary);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* ============================================================================
+   MOBILE-ONLY visibility helper — kept in sync with the media query below
+   so the boundary at exactly 768px aligns between visibility and overrides
+   (Tailwind's md:hidden hides at >=768, which would create a 1px gap).
+   ============================================================================ */
+.mobile-only {
+  display: none;
+}
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE OVERRIDES — applies at 768px and below.
+   Desktop (769px+) is untouched. All rules use !important so they win against
+   Tailwind utility classes and inline styles that would otherwise bleed in
+   from the desktop design. Structured by the 8 problem categories.
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  /* --------------------------------------------------------------------------
+     PROBLEM 1 — Typography scaled down for mobile
+     Target Apple type scale classes AND the specific arbitrary-size elements
+     (landing hero, dashboard score). Chat bubbles, kbd chips, and small
+     interactive elements are explicitly protected from the p/span overrides.
+     -------------------------------------------------------------------------- */
+
+  /* Apple type scale */
+  .text-large-title {
+    font-size: 28px !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.03em !important;
+  }
+  .text-title-1 {
+    font-size: 24px !important;
+    letter-spacing: -0.02em !important;
+  }
+  .text-title-2 {
+    font-size: 20px !important;
+    letter-spacing: -0.02em !important;
+  }
+  .text-title-3 {
+    font-size: 17px !important;
+    letter-spacing: -0.01em !important;
+  }
+  .text-headline {
+    font-size: 15px !important;
+  }
+  .text-body {
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+  }
+  .text-callout {
+    font-size: 14px !important;
+  }
+  .text-subheadline {
+    font-size: 14px !important;
+  }
+  .text-footnote {
+    font-size: 12px !important;
+  }
+
+  /* Landing page hero headline — was text-[72px] md:text-[96px] */
+  .landing-hero-title {
+    font-size: 44px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  /* Dashboard hero score — was text-[96px] */
+  .hero-score-number {
+    font-size: 64px !important;
+    letter-spacing: -0.035em !important;
+  }
+  .hero-score-suffix {
+    font-size: 22px !important;
+  }
+
+  /* Dashboard stat card value — was text-[34px] inside StatCard */
+  .stat-card .stat-card-value,
+  .stat-card-value {
+    font-size: 26px !important;
+    font-weight: 700 !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 2 — Cards tighter, tactile like iOS widgets
+     -------------------------------------------------------------------------- */
+
+  /* Glass cards — reduce padding + radius */
+  .glass {
+    border-radius: 16px !important;
+  }
+
+  /* Only override padding when no p-0 explicitly set — padding utilities take precedence */
+  .glass:not(.glass-modal):not(.glass-dark):not(.glass-rail) {
+    padding: 16px !important;
+  }
+
+  /* Modals stay roomy — they're the primary surface when open */
+  .glass-modal {
+    border-radius: 22px !important;
+    padding: 22px !important;
+  }
+
+  /* Stat cards — compact iOS widget feel */
+  .stat-card {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Stats grid on dashboard — 2-column on mobile (not stacked) */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Recent trades card + enforcement card — tighter */
+  .glass.p-8,
+  .glass.p-6 {
+    padding: 16px !important;
+  }
+
+  /* Container / main padding */
+  main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  main > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 3 — Bubble must be a clean round circle on mobile
+     Disable the blob-morph animation so it stays perfectly circular.
+     The water-balloon blob aesthetic is a desktop-only treat.
+     -------------------------------------------------------------------------- */
+  .bubble-wrapper {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .bubble-container,
+  .bubble-inner,
+  .bubble-inner-2,
+  .bubble-membrane,
+  .bubble-specular,
+  .bubble-specular-2 {
+    border-radius: 50% !important;
+  }
+
+  /* Kill the blob-morph animation on mobile — keep the conic gradient spin */
+  .bubble-container {
+    animation: none !important;
+  }
+
+  /* Onboarding companion bubble (Step 4) — explicit 80px round */
+  .onboarding-companion-bubble,
+  .onboarding-companion-bubble .bubble-wrapper,
+  .onboarding-companion-bubble .bubble-container {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 4 — Overflow containment
+     -------------------------------------------------------------------------- */
+  .page-section,
+  section,
+  main,
+  .page-content {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Tables — scroll horizontally inside their container, not the page */
+  table {
+    display: block !important;
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Canvas backgrounds */
+  canvas {
+    max-width: 100vw !important;
+  }
+
+  /* Fixed-position orbs must never create scroll */
+  .background-orbs {
+    overflow: hidden !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 5 — Mobile navigation (hide sidebar, space for bottom tab bar)
+     -------------------------------------------------------------------------- */
+  .glass-rail {
+    display: none !important;
+  }
+
+  /* Leave room for the fixed MobileTabBar (72px + safe area) */
+  main {
+    padding-bottom: 96px !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 6 — TopBar pill on mobile: smaller, tighter, hide session timer
+     -------------------------------------------------------------------------- */
+  .topbar-pill {
+    top: 12px !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .topbar-pill .topbar-session-timer,
+  .topbar-pill .topbar-hide-mobile {
+    display: none !important;
+  }
+
+  .topbar-pill .topbar-level-label {
+    display: none !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 7 — Landing page hero: left-align, smaller, column CTAs
+     -------------------------------------------------------------------------- */
+  .landing-hero {
+    padding: 96px 20px 56px !important;
+    text-align: left !important;
+    align-items: flex-start !important;
+  }
+
+  .landing-hero .hero-eyebrow {
+    font-size: 10px !important;
+    padding: 6px 12px !important;
+  }
+
+  .landing-hero-content {
+    text-align: left !important;
+    max-width: 100% !important;
+  }
+
+  .landing-hero-subtitle {
+    font-size: 15px !important;
+    text-align: left !important;
+    max-width: 100% !important;
+    line-height: 1.55 !important;
+  }
+
+  .hero-cta-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    justify-content: stretch !important;
+  }
+
+  .hero-cta-row a,
+  .hero-cta-row button,
+  .hero-cta-row .btn-primary,
+  .hero-cta-row .btn-ghost {
+    width: 100% !important;
+  }
+
+  .hero-cta-row .btn-primary,
+  .hero-cta-row .btn-ghost {
+    justify-content: center !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+  }
+
+  /* Features grid on landing — single column */
+  .features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     PROBLEM 8 — Companion bubble position on mobile (above tab bar)
+     -------------------------------------------------------------------------- */
+  .floating-bubble {
+    bottom: 88px !important;
+    right: 20px !important;
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  /* When the bubble is in its drag-grabbed state, Framer Motion applies
+     inline transforms that still work — we only resize the outer box. */
+
+  /* --------------------------------------------------------------------------
+     FINAL GLOBAL MOBILE POLISH
+     -------------------------------------------------------------------------- */
+
+  /* Tighten dashboard hero grid — collapse the ring+orb column */
+  .hero-score-card {
+    padding: 20px !important;
+  }
+
+  /* Enforcement ladder rows — tighter */
+  .ladder-row,
+  [class*="EnforcementLadder"] {
+    padding: 12px 14px !important;
+  }
+
+  /* Rules-page preset cards — tighter */
+  .preset-card {
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Command palette — fit the viewport */
+  .glass-modal[role='dialog'] {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  /* GlassModal on mobile — smaller padding */
+  .glass-modal {
+    padding: 20px !important;
+  }
+
+  /* Buttons: primary/ghost full-width-friendly in hero, but not globally */
+  .btn-primary,
+  .btn-ghost,
+  .btn-danger,
+  .btn-success {
+    font-size: 15px !important;
+    padding: 12px 20px !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* ============================================================================
+   TOUCH DEVICES — disable tilt/hover transforms, enable press-depth instead
+   ============================================================================ */
+@media (hover: none) and (pointer: coarse) {
+  .glass,
+  .liquid-glass,
+  .glass-interactive {
+    transform: none !important;
+    transition: box-shadow 0.2s ease, background 0.2s ease !important;
+  }
+
+  /* Specular highlight hidden on touch (no cursor to track) */
+  .glass::after,
+  .liquid-glass::after,
+  .glass-dark::after,
+  .glass-modal::after {
+    display: none !important;
+  }
+
+  /* Touch press depth — glass surface depresses on tap */
+  .glass:active,
+  .liquid-glass:active {
+    background: rgba(255, 255, 255, 0.10) !important;
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    transform: scale(0.99) !important;
+    transition: transform 0.1s ease !important;
+  }
+
+  /* Button jelly on touch */
+  .btn-primary:hover:not(:disabled),
+  .btn-ghost:hover:not(:disabled),
+  .btn-danger:hover:not(:disabled),
+  .btn-success:hover:not(:disabled) {
+    transform: none !important;
+  }
+
+  .btn-primary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .btn-danger:active:not(:disabled),
+  .btn-success:active:not(:disabled) {
+    transform: scale(0.94) !important;
+    transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+}
+
+/* ============================================================================
+   GPU ACCELERATION — force compositing layers on animated elements
+   ============================================================================ */
+.bubble-wrapper,
+.floating-bubble,
+[class*='animate-orb'] {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ============================================================================
+   REDUCED MOTION — respect OS-level preference
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
