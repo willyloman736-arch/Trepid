@@ -102,6 +102,31 @@ export default function SettingsPage() {
         </div>
       </GlassCard>
 
+      {/* Subscription */}
+      <GlassCard padding="p-6" hover={false}>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-[14px] bg-accent/15 grid place-items-center shrink-0">
+            <Icon name="zap" className="w-6 h-6 text-accent" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="text-title-3 text-label">Free Plan</h3>
+              <GlassBadge tone="accent">Current</GlassBadge>
+            </div>
+            <p className="text-footnote text-label-secondary">
+              3 rules &middot; 20 trades/month &middot; Basic enforcement
+            </p>
+          </div>
+          <GlassButton
+            variant="primary"
+            size="sm"
+            onClick={() => router.push('/pricing')}
+          >
+            Upgrade
+          </GlassButton>
+        </div>
+      </GlassCard>
+
       {/* Morning priming */}
       <GlassCard padding="p-6" hover={false}>
         <div className="flex items-start gap-4">

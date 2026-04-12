@@ -58,6 +58,19 @@ export default function LandingPage() {
           </span>
         </div>
 
+        {/* Nav links */}
+        <a
+          href="/pricing"
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.6)',
+            textDecoration: 'none',
+          }}
+        >
+          Pricing
+        </a>
+
         {/* CTA buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
           <a
@@ -196,6 +209,79 @@ export default function LandingPage() {
             </GlassCard>
           </motion.div>
         ))}
+      </motion.div>
+      {/* Pricing preview */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 mt-20 max-w-4xl w-full text-center"
+      >
+        <h2
+          className="text-title-1 text-label mb-3"
+          style={{ letterSpacing: '-0.03em' }}
+        >
+          Simple pricing. Start free.
+        </h2>
+        <p className="text-[15px] text-label-secondary mb-8">
+          No credit card required. Upgrade when you need more.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {[
+            {
+              name: 'Free',
+              price: '$0',
+              desc: '3 rules, 20 trades/mo',
+            },
+            {
+              name: 'Pro',
+              price: '$19/mo',
+              desc: 'Full enforcement + AI companion',
+              popular: true,
+            },
+            {
+              name: 'Elite',
+              price: '$39/mo',
+              desc: 'MetaApi sync + unlimited everything',
+            },
+          ].map((p) => (
+            <div
+              key={p.name}
+              className={`glass ${p.popular ? 'glow-accent' : ''}`}
+              style={{ borderRadius: 16, padding: 20, position: 'relative' }}
+            >
+              {p.popular && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -1,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    background:
+                      'linear-gradient(90deg, transparent, #007AFF, transparent)',
+                    borderRadius: '16px 16px 0 0',
+                  }}
+                />
+              )}
+              <p className="text-[13px] font-semibold text-label-secondary mb-1">
+                {p.name}
+              </p>
+              <p className="text-[28px] font-extrabold text-label tabular-nums tracking-tight mb-1">
+                {p.price}
+              </p>
+              <p className="text-[12px] text-label-tertiary">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <Link
+          href="/pricing"
+          className="text-[14px] font-semibold text-accent hover:text-accent-hover transition-colors"
+        >
+          See all plans &rarr;
+        </Link>
       </motion.div>
     </main>
   )
