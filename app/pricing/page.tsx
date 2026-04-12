@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Icon } from '@/components/ui/Icon'
 import { GlassButton } from '@/components/ui/GlassButton'
-import { PriceWaves } from '@/components/ui/PriceWaves'
+import NightSky from '@/components/ui/NightSky'
 import { BackgroundOrbs } from '@/components/layout/BackgroundOrbs'
 
 /* ============================================================
@@ -29,8 +29,8 @@ export default function PricingPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <PriceWaves enforcementLevel={0} />
-      <BackgroundOrbs />
+      <NightSky />
+      <BackgroundOrbs dim />
 
       {/* Floating nav — same as landing */}
       <nav
@@ -62,13 +62,13 @@ export default function PricingPage() {
               width: 28,
               height: 28,
               borderRadius: 8,
-              background: 'rgba(0,122,255,0.3)',
-              border: '1px solid rgba(0,122,255,0.5)',
+              background: 'rgba(79,110,247,0.3)',
+              border: '1px solid rgba(79,110,247,0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 12,
-              color: '#007AFF',
+              color: '#4F6EF7',
               fontWeight: 700,
             }}
           >
@@ -99,7 +99,7 @@ export default function PricingPage() {
             style={{
               padding: '7px 16px',
               borderRadius: 50,
-              background: '#007AFF',
+              background: '#4F6EF7',
               border: 'none',
               color: 'white',
               fontSize: 13,
@@ -153,7 +153,7 @@ export default function PricingPage() {
                   padding: '8px 24px',
                   borderRadius: 100,
                   border: 'none',
-                  background: audience === tab ? '#007AFF' : 'transparent',
+                  background: audience === tab ? '#4F6EF7' : 'transparent',
                   color: audience === tab ? 'white' : 'rgba(255,255,255,0.5)',
                   fontSize: 14,
                   fontWeight: 600,
@@ -188,7 +188,7 @@ export default function PricingPage() {
                 height: 24,
                 borderRadius: 12,
                 border: 'none',
-                background: isAnnual ? '#007AFF' : 'rgba(255,255,255,0.15)',
+                background: isAnnual ? '#4F6EF7' : 'rgba(255,255,255,0.15)',
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'background 0.2s',
@@ -404,7 +404,7 @@ function PricingCard({
             right: 0,
             height: 2,
             background:
-              'linear-gradient(90deg, transparent, #007AFF, transparent)',
+              'linear-gradient(90deg, transparent, #4F6EF7, transparent)',
             borderRadius: '20px 20px 0 0',
           }}
         />
@@ -418,8 +418,8 @@ function PricingCard({
             <span
               className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
               style={{
-                background: 'rgba(0,122,255,0.15)',
-                color: '#007AFF',
+                background: 'rgba(79,110,247,0.15)',
+                color: '#4F6EF7',
               }}
             >
               {plan.badge}

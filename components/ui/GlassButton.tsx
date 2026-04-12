@@ -44,10 +44,10 @@ const VARIANT_STYLES: Record<
   { background: string; color: string; boxShadow: string }
 > = {
   primary: {
-    background: 'rgba(0, 122, 255, 0.9)',
+    background: 'linear-gradient(135deg, #4F6EF7, #6B7FFF)',
     color: 'white',
     boxShadow:
-      'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,80,0.3), 0 4px 16px rgba(0,122,255,0.4), 0 2px 6px rgba(0,0,0,0.3)',
+      'inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,50,0.3), 0 4px 20px rgba(79,110,247,0.35), 0 2px 8px rgba(0,0,0,0.3)',
   },
   ghost: {
     background: 'rgba(255,255,255,0.08)',
@@ -71,7 +71,7 @@ const VARIANT_STYLES: Record<
 
 const HOVER_SHADOW: Record<Variant, string> = {
   primary:
-    'inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 24px rgba(0,122,255,0.5), 0 4px 12px rgba(0,0,0,0.35)',
+    'inset 0 1px 0 rgba(255,255,255,0.3), 0 8px 28px rgba(79,110,247,0.45), 0 4px 12px rgba(0,0,0,0.35)',
   ghost:
     'inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 24px rgba(0,0,0,0.4)',
   danger:

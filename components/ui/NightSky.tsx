@@ -72,20 +72,20 @@ export default function NightSky() {
           navigator.hardwareConcurrency != null &&
           navigator.hardwareConcurrency <= 4) ||
         ((navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8) <= 4
-      const divisor = isLowEnd ? 12000 : 6000
+      const divisor = isLowEnd ? 8000 : 4000
       const count = Math.floor((w * h) / divisor)
 
       for (let i = 0; i < count; i++) {
         const roll = Math.random()
         let size: number
-        if (roll > 0.98) {
-          size = 2.2 + Math.random() * 0.8 // 2% — brightest with sparkle
-        } else if (roll > 0.9) {
-          size = 1.4 + Math.random() * 0.6 // 8% — medium with glow
-        } else if (roll > 0.6) {
-          size = 0.8 + Math.random() * 0.5 // 30% — small
+        if (roll > 0.96) {
+          size = 2.8 + Math.random() * 1.0 // 4% — bright with sparkle
+        } else if (roll > 0.85) {
+          size = 1.8 + Math.random() * 0.8 // 11% — medium with glow
+        } else if (roll > 0.55) {
+          size = 1.0 + Math.random() * 0.6 // 30% — small
         } else {
-          size = 0.3 + Math.random() * 0.4 // 60% — tiny faint
+          size = 0.5 + Math.random() * 0.4 // 55% — tiny
         }
 
         stars.push({
@@ -133,7 +133,7 @@ export default function NightSky() {
 
       /* Medium/large stars — outer glow bloom on size > 1.2 */
       if (s.size > 1.2) {
-        const glowSize = s.size * 4
+        const glowSize = s.size * 6
         const glowGrad = ctx.createRadialGradient(
           s.x,
           s.y,
@@ -142,8 +142,8 @@ export default function NightSky() {
           s.y,
           glowSize
         )
-        glowGrad.addColorStop(0, `${s.color}${s.opacity * 0.3})`)
-        glowGrad.addColorStop(0.4, `${s.color}${s.opacity * 0.08})`)
+        glowGrad.addColorStop(0, `${s.color}${s.opacity * 0.5})`)
+        glowGrad.addColorStop(0.4, `${s.color}${s.opacity * 0.15})`)
         glowGrad.addColorStop(1, `${s.color}0)`)
         ctx.beginPath()
         ctx.arc(s.x, s.y, glowSize, 0, Math.PI * 2)
@@ -201,7 +201,7 @@ export default function NightSky() {
         const twinkleAmount = s.size > 1.5 ? 0.35 : 0.15
 
         const baseOpacity =
-          s.size > 1.8 ? 0.65 : s.size > 1.2 ? 0.35 : 0.2
+          s.size > 1.8 ? 0.85 : s.size > 1.2 ? 0.55 : 0.28
 
         s.opacity = Math.max(
           0.02,

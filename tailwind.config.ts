@@ -34,10 +34,10 @@ const config: Config = {
         },
         /* Apple system colors */
         accent: {
-          DEFAULT: '#007AFF',
-          hover: '#0A84FF',
-          soft: 'rgba(0, 122, 255, 0.1)',
-          glow: 'rgba(0, 122, 255, 0.35)',
+          DEFAULT: '#4F6EF7',
+          hover: '#6B87FF',
+          soft: 'rgba(79, 110, 247, 0.1)',
+          glow: 'rgba(79, 110, 247, 0.35)',
         },
         success: {
           DEFAULT: '#30D158',

@@ -5,13 +5,13 @@ import { motion } from 'framer-motion'
 import { Icon } from '@/components/ui/Icon'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { BackgroundOrbs } from '@/components/layout/BackgroundOrbs'
-import { PriceWaves } from '@/components/ui/PriceWaves'
+import NightSky from '@/components/ui/NightSky'
 
 export default function LandingPage() {
   return (
     <main className="landing-hero relative min-h-screen flex flex-col items-center justify-center px-6 py-20 overflow-hidden">
-      <PriceWaves enforcementLevel={0} />
-      <BackgroundOrbs />
+      <NightSky />
+      <BackgroundOrbs dim />
 
       {/* Floating navigation bar */}
       <nav
@@ -41,13 +41,13 @@ export default function LandingPage() {
               width: 28,
               height: 28,
               borderRadius: 8,
-              background: 'rgba(0,122,255,0.3)',
-              border: '1px solid rgba(0,122,255,0.5)',
+              background: 'rgba(79,110,247,0.3)',
+              border: '1px solid rgba(79,110,247,0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 12,
-              color: '#007AFF',
+              color: '#4F6EF7',
               fontWeight: 700,
             }}
           >
@@ -94,7 +94,7 @@ export default function LandingPage() {
             style={{
               padding: '7px 16px',
               borderRadius: 50,
-              background: '#007AFF',
+              background: '#4F6EF7',
               border: 'none',
               color: 'white',
               fontSize: 13,
@@ -171,7 +171,7 @@ export default function LandingPage() {
             icon: 'shield-check' as const,
             title: 'Rule Engine',
             desc: 'Define max trades, loss caps, cooldowns, and behavioral gates.',
-            tint: '#007AFF',
+            tint: '#4F6EF7',
           },
           {
             icon: 'bar-chart' as const,
@@ -260,7 +260,7 @@ export default function LandingPage() {
                     right: 0,
                     height: 2,
                     background:
-                      'linear-gradient(90deg, transparent, #007AFF, transparent)',
+                      'linear-gradient(90deg, transparent, #4F6EF7, transparent)',
                     borderRadius: '16px 16px 0 0',
                   }}
                 />
