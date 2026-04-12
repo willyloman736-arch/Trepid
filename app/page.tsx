@@ -13,6 +13,88 @@ export default function LandingPage() {
       <PriceWaves enforcementLevel={0} />
       <BackgroundOrbs />
 
+      {/* Floating navigation bar */}
+      <nav
+        style={{
+          position: 'fixed',
+          top: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 24,
+          padding: '10px 20px',
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(40px)',
+          WebkitBackdropFilter: 'blur(40px)',
+          borderRadius: 100,
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.4)',
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: 'rgba(0,122,255,0.3)',
+              border: '1px solid rgba(0,122,255,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              color: '#007AFF',
+              fontWeight: 700,
+            }}
+          >
+            T
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'white' }}>
+            Trepid
+          </span>
+        </div>
+
+        {/* CTA buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a
+            href="/login"
+            style={{
+              padding: '7px 16px',
+              borderRadius: 50,
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Sign In
+          </a>
+          <a
+            href="/register"
+            style={{
+              padding: '7px 16px',
+              borderRadius: 50,
+              background: '#007AFF',
+              border: 'none',
+              color: 'white',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Get Started
+          </a>
+        </div>
+      </nav>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -24,7 +106,14 @@ export default function LandingPage() {
           Discipline Engine
         </div>
 
-        <h1 className="landing-hero-title text-[72px] md:text-[96px] font-extrabold tracking-[-0.04em] text-label leading-[0.95] mb-6">
+        <h1
+          className="landing-hero-title font-extrabold text-label mb-6"
+          style={{
+            fontSize: 'clamp(40px, 5.5vw, 72px)',
+            lineHeight: 1.05,
+            letterSpacing: '-0.04em',
+          }}
+        >
           Stop Overtrading.
           <br />
           <span className="text-gradient-accent">Protect Your Edge.</span>
