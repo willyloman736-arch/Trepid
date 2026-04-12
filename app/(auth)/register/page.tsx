@@ -9,6 +9,7 @@ import { GlassButton } from '@/components/ui/GlassButton'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { Icon } from '@/components/ui/Icon'
 import { useStore } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -17,14 +18,32 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      login(email, name)
+    setError('')
+
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+      },
+    })
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    if (data.user) {
+      // Sync to Zustand store
+      login(data.user.email ?? email, name)
       router.push('/dashboard')
-    }, 500)
+    }
   }
 
   return (
@@ -66,6 +85,12 @@ export default function RegisterPage() {
           <p className="text-callout text-label-secondary text-center mb-8">
             Create your account. 30 seconds.
           </p>
+
+          {error && (
+            <div className="mb-4 p-3 rounded-[12px] bg-danger/10 border border-danger/20 text-danger text-[13px] font-medium text-center">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={submit} className="space-y-4">
             <GlassInput

@@ -9,21 +9,37 @@ import { GlassButton } from '@/components/ui/GlassButton'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { Icon } from '@/components/ui/Icon'
 import { useStore } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
   const login = useStore((s) => s.login)
-  const [email, setEmail] = useState('trader@trepid.app')
-  const [password, setPassword] = useState('demo')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      login(email)
+    setError('')
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    if (data.user) {
+      // Sync Supabase user to Zustand store
+      login(data.user.email ?? email, data.user.user_metadata?.name)
       router.push('/dashboard')
-    }, 500)
+    }
   }
 
   return (
@@ -64,6 +80,12 @@ export default function LoginPage() {
             Sign in to guard your edge.
           </p>
 
+          {error && (
+            <div className="mb-4 p-3 rounded-[12px] bg-danger/10 border border-danger/20 text-danger text-[13px] font-medium text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={submit} className="space-y-4">
             <GlassInput
               label="Email"
@@ -93,24 +115,6 @@ export default function LoginPage() {
             </GlassButton>
           </form>
 
-          <div className="my-6 flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/[0.1]" />
-            <span className="text-[12px] font-semibold text-label-tertiary">OR</span>
-            <div className="flex-1 h-px bg-white/[0.1]" />
-          </div>
-
-          <GlassButton
-            variant="ghost"
-            className="w-full !py-4 !text-[17px] !rounded-[16px]"
-            onClick={() => {
-              login('demo@google.com', 'Google Demo')
-              router.push('/dashboard')
-            }}
-          >
-            <Icon name="google" className="w-4 h-4" strokeWidth={2} />
-            Continue with Google
-          </GlassButton>
-
           <p className="mt-8 text-center text-[14px] text-label-secondary">
             No account?{' '}
             <Link
@@ -121,10 +125,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </GlassCard>
-
-        <p className="mt-6 text-center text-[12px] text-label-tertiary">
-          Mock auth — any email / password works
-        </p>
       </motion.div>
     </>
   )
