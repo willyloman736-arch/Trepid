@@ -4,6 +4,9 @@ const nextConfig = {
   transpilePackages: ['three'],
   compress: true,
 
+  /* Disable the dev build indicator (the colored bar/border) */
+  devIndicators: false,
+
   /* PWA headers — service worker must be served without aggressive cache
      so updates propagate immediately. Manifest is similar. */
   async headers() {

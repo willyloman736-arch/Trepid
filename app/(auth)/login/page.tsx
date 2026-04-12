@@ -59,25 +59,37 @@ export default function LoginPage() {
         </Link>
 
         <GlassCard padding="p-10" hover={false}>
-          <div className="flex justify-center mb-8">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-[20px] liquid-gradient" />
-              <div
-                className="absolute inset-[3px] rounded-[17px] grid place-items-center"
+          <div className="flex justify-center mb-6">
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: 'rgba(0, 122, 255, 0.15)',
+                border: '1px solid rgba(0, 122, 255, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 24px rgba(0,122,255,0.2)',
+              }}
+            >
+              <span
                 style={{
-                  background: 'rgba(255,255,255,0.3)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: '#007AFF',
+                  fontFamily: 'Inter, sans-serif',
+                  letterSpacing: '-0.04em',
                 }}
               >
-                <Icon name="shield-check" className="w-8 h-8 text-white" strokeWidth={2.2} />
-              </div>
+                T
+              </span>
             </div>
           </div>
 
           <h1 className="text-title-1 text-label text-center mb-2">Welcome back</h1>
           <p className="text-callout text-label-secondary text-center mb-8">
-            Sign in to guard your edge.
+            Your discipline engine is waiting.
           </p>
 
           {error && (
