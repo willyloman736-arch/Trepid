@@ -92,7 +92,8 @@ export default function RulesPage() {
         <div
           className="inline-flex p-1 rounded-[14px] mb-6"
           style={{
-            background: 'rgba(0,0,0,0.06)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           {TABS.map((tab) => (
@@ -100,20 +101,25 @@ export default function RulesPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'relative px-5 py-2 rounded-[10px] text-[14px] font-semibold transition-colors',
+                'relative px-5 py-2.5 rounded-[10px] text-[14px] font-semibold transition-colors z-0',
                 activeTab === tab.id
-                  ? 'text-label'
+                  ? 'text-white'
                   : 'text-label-secondary hover:text-label'
               )}
             >
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="rules-tab-indicator"
-                  className="absolute inset-0 bg-white rounded-[10px] shadow-sm"
+                  className="absolute inset-0 rounded-[10px]"
+                  style={{
+                    background: 'rgba(79, 110, 247, 0.2)',
+                    border: '1px solid rgba(79, 110, 247, 0.3)',
+                    zIndex: -1,
+                  }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
-              <span className="relative">{tab.label}</span>
+              <span className="relative z-[1]">{tab.label}</span>
             </button>
           ))}
         </div>
