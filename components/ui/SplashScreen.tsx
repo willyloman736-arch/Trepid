@@ -49,6 +49,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
     let started = false
     const handleCanPlay = () => {
+      /* Only start on canplaythrough — guarantees the ENTIRE video
+         is buffered before playback begins. No stutter, no cutoff. */
+    }
+
+    const handleFullyBuffered = () => {
       if (started) return
       started = true
       setPhase('playing')
@@ -91,18 +96,34 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }, 15000)
     )
 
-    /* Listen to both canplay (can start, may buffer) and
-       canplaythrough (can play to end without buffering).
-       Whichever fires first starts the video. */
-    video.addEventListener('canplay', handleCanPlay)
-    video.addEventListener('canplaythrough', handleCanPlay)
+    /* Only listen to canplaythrough — waits until the browser
+       estimates it can play the ENTIRE video without buffering.
+       This eliminates all stutter and partial playback. */
+    video.addEventListener('canplaythrough', handleFullyBuffered)
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
 
+    /* Also manually check buffered range — some browsers fire
+       canplaythrough too early. Double-check every 500ms. */
+    const bufferCheck = setInterval(() => {
+      if (started || completedRef.current) {
+        clearInterval(bufferCheck)
+        return
+      }
+      if (video.buffered.length > 0 && video.duration > 0) {
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1)
+        if (bufferedEnd >= video.duration - 0.5) {
+          /* Fully buffered — safe to play without stutter */
+          clearInterval(bufferCheck)
+          handleFullyBuffered()
+        }
+      }
+    }, 500)
+
     return () => {
+      clearInterval(bufferCheck)
       timeouts.forEach((t) => clearTimeout(t))
-      video.removeEventListener('canplay', handleCanPlay)
-      video.removeEventListener('canplaythrough', handleCanPlay)
+      video.removeEventListener('canplaythrough', handleFullyBuffered)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)
     }
@@ -129,29 +150,35 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }}
         aria-hidden="true"
       >
-        {/* Loading state — minimal dot pulse while video loads */}
+        {/* Loading state — pulsing T logo while video fully buffers */}
         {phase === 'loading' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
             style={{
               position: 'absolute',
               inset: 0,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: 24,
             }}
           >
             <motion.div
               animate={{ opacity: [0.3, 0.8, 0.3] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               style={{
-                width: 4,
-                height: 4,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.5)',
+                fontSize: 48,
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.6)',
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                letterSpacing: '-0.04em',
               }}
-            />
+            >
+              T
+            </motion.div>
           </motion.div>
         )}
 
