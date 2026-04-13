@@ -1294,42 +1294,43 @@ html.dark {
   /* ============================================================
      DRIFTING BACKGROUND ORBS
      ============================================================ */
+  /* translate3d forces GPU compositing — cached blur, smooth drift */
   @keyframes orb-drift-1 {
     0%,
     100% {
-      transform: translate(0px, 0px) scale(1);
+      transform: translate3d(0, 0, 0) scale(1);
     }
     33% {
-      transform: translate(60px, -40px) scale(1.05);
+      transform: translate3d(60px, -40px, 0) scale(1.05);
     }
     66% {
-      transform: translate(-40px, 40px) scale(0.95);
+      transform: translate3d(-40px, 40px, 0) scale(0.95);
     }
   }
 
   @keyframes orb-drift-2 {
     0%,
     100% {
-      transform: translate(0px, 0px) scale(1);
+      transform: translate3d(0, 0, 0) scale(1);
     }
     33% {
-      transform: translate(-50px, 30px) scale(0.95);
+      transform: translate3d(-50px, 30px, 0) scale(0.95);
     }
     66% {
-      transform: translate(40px, -30px) scale(1.05);
+      transform: translate3d(40px, -30px, 0) scale(1.05);
     }
   }
 
   @keyframes orb-drift-3 {
     0%,
     100% {
-      transform: translate(0px, 0px) scale(1);
+      transform: translate3d(0, 0, 0) scale(1);
     }
     33% {
-      transform: translate(30px, 50px) scale(1.03);
+      transform: translate3d(30px, 50px, 0) scale(1.03);
     }
     66% {
-      transform: translate(-50px, -40px) scale(0.97);
+      transform: translate3d(-50px, -40px, 0) scale(0.97);
     }
   }
 
@@ -1779,13 +1780,78 @@ html.dark {
 /* ============================================================================
    GPU ACCELERATION — force compositing layers on animated elements
    ============================================================================ */
+.glass,
+.glass-dark,
+.glass-modal,
+.liquid-glass,
 .bubble-wrapper,
 .floating-bubble,
-[class*='animate-orb'] {
+[class*='animate-orb'],
+canvas,
+.topbar-pill,
+.glass-rail {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* ============================================================================
+   GLASS-STATIC — lightweight fake glass for non-interactive elements.
+   No backdrop-filter = zero GPU cost. Looks 90% identical.
+   Use on: badges, pills, labels, static info cards, skeleton loaders.
+   ============================================================================ */
+.glass-static {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+  /* NO backdrop-filter */
+}
+
+/* ============================================================================
+   MOBILE PERFORMANCE — strip backdrop-filter from non-critical glass.
+   On mobile GPUs, 41 simultaneous backdrop-filters cause visible lag.
+   Only the topbar, sidebar, modals, and companion keep blur.
+   ============================================================================ */
+@media (max-width: 768px) {
+  /* Remove backdrop-filter from all regular glass cards on mobile */
+  .glass:not(.glass-dark):not(.glass-modal):not(.glass-rail),
+  .liquid-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(20, 20, 30, 0.88) !important;
+  }
+
+  /* Hover state also solid on mobile */
+  .glass:not(.glass-dark):not(.glass-modal):not(.glass-rail):hover,
+  .liquid-glass:hover {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(28, 28, 40, 0.92) !important;
+  }
+
+  /* ::before gradient borders still work without backdrop-filter */
+  /* ::after specular already hidden on touch devices */
+
+  /* Keep blur ONLY on critical floating UI */
+  .topbar-pill,
+  .glass-dark,
+  .glass-modal,
+  .glass-rail,
+  [role='dialog'] {
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  }
+
+  /* Reduce blur intensity on mobile for elements that keep it */
+  .glass-dark {
+    backdrop-filter: blur(16px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  }
 }
 
 /* ============================================================================

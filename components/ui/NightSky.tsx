@@ -51,7 +51,9 @@ export default function NightSky() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d', { alpha: true })
+    /* alpha: false = major perf win — browser skips alpha compositing.
+       Works because background is always pure black. */
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) return
 
     let animId = 0
@@ -190,7 +192,9 @@ export default function NightSky() {
     }
 
     const tick = () => {
-      ctx.clearRect(0, 0, w, h)
+      /* fillRect on non-alpha canvas is faster than clearRect */
+      ctx.fillStyle = '#000000'
+      ctx.fillRect(0, 0, w, h)
 
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i]

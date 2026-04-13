@@ -4,13 +4,18 @@ const nextConfig = {
   transpilePackages: ['three'],
   compress: true,
 
-  /* Disable the dev build indicator (the colored bar/border) */
+  /* Disable the dev build indicator */
   devIndicators: false,
 
-  /* PWA headers — service worker must be served without aggressive cache
-     so updates propagate immediately. Manifest is similar. */
   async headers() {
     return [
+      {
+        /* DNS prefetch + general perf headers on all routes */
+        source: '/(.*)',
+        headers: [
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+        ],
+      },
       {
         source: '/sw.js',
         headers: [
@@ -25,10 +30,10 @@ const nextConfig = {
         ],
       },
       {
-        source: '/splash-video.mp4',
+        /* Cache static assets aggressively */
+        source: '/_next/static/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-          { key: 'Accept-Ranges', value: 'bytes' },
         ],
       },
     ]
@@ -40,7 +45,7 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
 
-  /* Tree-shaking hints for heavy libraries */
+  /* Tree-shaking for heavy libraries */
   experimental: {
     optimizePackageImports: ['framer-motion', 'recharts'],
   },
