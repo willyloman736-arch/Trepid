@@ -22,7 +22,10 @@
       "Bash(ls \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd/\"*.mp4)",
       "Read(//c/Users/KAMSTORE/Desktop/**)",
       "Bash(xargs sed:*)",
-      "Bash(ffprobe -v quiet -print_format json -show_format \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public\\\\splash-video.mp4\")"
+      "Bash(ffprobe -v quiet -print_format json -show_format \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public\\\\splash-video.mp4\")",
+      "Bash(ffmpeg -i \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public\\\\splash-video.mp4\" -vcodec libx264 -crf 30 -preset fast -vf \"scale=1280:720\" -an -movflags +faststart -y \"C:\\\\Users\\\\KAMSTORE\\\\Desktop\\\\Trade Gaurd\\\\public\\\\splash-compressed.mp4\")",
+      "Bash(rm splash-video.mp4)",
+      "Bash(mv splash-compressed.mp4 splash-video.mp4)"
     ]
   }
 }
